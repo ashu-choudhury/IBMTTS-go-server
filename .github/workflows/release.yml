@@ -1,0 +1,43 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build 32-bit Windows Binary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+
+    - name: Build
+      env:
+        GOOS: windows
+        GOARCH: 386
+      run: |
+        go build -ldflags="-s -w" -o ibmtts_server_32bit.exe main.go
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: success()
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
+        draft: false
+        prerelease: false
+        files: |
+          ibmtts_server_32bit.exe
+          setup_eloquence.sh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

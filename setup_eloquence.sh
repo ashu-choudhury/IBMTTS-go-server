@@ -44,12 +44,17 @@ proot-distro login debian -- bash <<EOF
 EOF
 
 # 4. Download the IBMTTS Bridge Server
-# NOTE: Replace the URL below with your GitHub release link
-SERVER_URL="PASTE_YOUR_GITHUB_RELEASE_URL_HERE"
-echo -e "${GREEN}[4/5] Downloading IBMTTS Server...${NC}"
+REPO_URL="https://github.com/ashu-choudhury/IBMTTS-go-server"
+SERVER_URL="${REPO_URL}/releases/latest/download/ibmtts_server_32bit.exe"
+
+echo -e "${GREEN}[4/5] Downloading IBMTTS Server from GitHub...${NC}"
 mkdir -p $HOME/ibmtts
-# For now, we assume you will copy the ibmtts_server_32bit.exe to $HOME/ibmtts manually 
-# if you haven't uploaded it to GitHub yet.
+wget -q "$SERVER_URL" -O $HOME/ibmtts/ibmtts_server_32bit.exe
+
+if [ ! -f "$HOME/ibmtts/ibmtts_server_32bit.exe" ]; then
+    echo -e "${RED}Error: Failed to download the server. Is the release published?${NC}"
+    exit 1
+fi
 
 # 5. Create the startup shortcut
 echo -e "${GREEN}[5/5] Creating startup script...${NC}"

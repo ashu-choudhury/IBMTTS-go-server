@@ -10,7 +10,6 @@ go.work
 go.sum
 
 # Temporary files
-lib/
 output_test.wav
 *.log
 

@@ -26,9 +26,9 @@ proot-distro login alpine -- sh <<EOF
     # Install core Alpine tools
     apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++ binutils
     
-    # 1. Install Box86 (Verified Android Build)
-    echo "Downloading Box86..."
-    wget https://github.com/ryanfortner/box86-debs/raw/master/debian/box86-android_0.3.9%2B20260108.0579f8b-1_armhf.deb -O /tmp/box86.deb
+    # 1. Install Box86 (WOW64 64-bit Native Build)
+    echo "Downloading 64-bit Box86 for modern phones..."
+    wget https://github.com/ryanfortner/box86-debs/raw/master/debian/box86-android-wow64_0.3.9%2B20260108.0579f8b-1_armhf.deb -O /tmp/box86.deb
     
     mkdir -p /tmp/extract
     cd /tmp/extract

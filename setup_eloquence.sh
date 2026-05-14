@@ -1,22 +1,21 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# --- IBMTTS (Eloquence) Termux Setup Script (v5.1 - PORTABLE) ---
+# --- IBMTTS (Eloquence) Termux Setup Script (v5.2 - PORTABLE) ---
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== IBMTTS Portable Setup (v5.1) ===${NC}"
+echo -e "${BLUE}=== IBMTTS Portable Setup (v5.2) ===${NC}"
 
 # 1. Base packages
 echo -e "${GREEN}[1/5] Installing core tools...${NC}"
 pkg update -y
 pkg install -y proot-distro wget tar
 
-# 2. Setup Alpine (Smallest Linux)
+# 2. Setup Alpine
 echo -e "${GREEN}[2/5] Setting up Alpine environment...${NC}"
-# We reset to make sure we have the binutils fix
 proot-distro remove alpine 2>/dev/null
 proot-distro install alpine
 
@@ -24,20 +23,27 @@ proot-distro install alpine
 echo -e "${GREEN}[3/5] Installing Portable Emulation Layer...${NC}"
 proot-distro login alpine -- sh <<EOF
     apk update
+    # binutils provides the 'ar' command needed to extract the .deb
     apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++ binutils
     
-    # 1. Install Box86 (AArch64 binary)
-    # Using the correct 0.3.2 filename
+    # 1. Install Box86 (Static 64-bit build for AArch64)
+    echo "Downloading Box86..."
     wget https://github.com/ptitSeb/box86/releases/download/v0.3.2/box86_0.3.2_arm64.deb -O /tmp/box86.deb
+    
     mkdir -p /tmp/extract
-    cd /tmp/extract && ar x /tmp/box86.deb && tar xf data.tar.xz -C /
+    cd /tmp/extract
+    ar x /tmp/box86.deb
+    tar xf data.tar.xz -C /
     chmod +x /usr/local/bin/box86
+    echo "Box86 installed."
 
     # 2. Download Portable Wine (Minimal Build)
+    echo "Downloading Portable Wine..."
     mkdir -p /opt/wine
     wget https://github.com/Kron4ek/Wine-Builds/releases/download/9.0/wine-9.0-x86.tar.xz -O /tmp/wine.tar.xz
     tar xf /tmp/wine.tar.xz -C /opt/wine --strip-components=1
     ln -s /opt/wine/bin/wine /usr/local/bin/wine
+    echo "Wine installed."
 EOF
 
 # 4. Download the IBMTTS Bridge Server

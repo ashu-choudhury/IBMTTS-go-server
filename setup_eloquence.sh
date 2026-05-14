@@ -1,52 +1,49 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# --- IBMTTS (Eloquence) Termux Setup Script (v3.0) ---
+# --- IBMTTS (Eloquence) Termux Setup Script (v4.0 - MINIMALIST) ---
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== IBMTTS Android Setup Wizard (v3.0) ===${NC}"
+echo -e "${BLUE}=== IBMTTS Android Minimal Setup (v4.0) ===${NC}"
 
-# 1. Base packages
-echo -e "${GREEN}[1/5] Installing base packages...${NC}"
+# 1. Base packages (Only the essentials)
+echo -e "${GREEN}[1/5] Installing Termux essentials...${NC}"
 pkg update -y
-pkg install -y proot-distro wget pulseaudio
+pkg install -y proot-distro wget
 
-# 2. Hard Reset Debian
-echo -e "${GREEN}[2/5] Cleaning and Resetting Debian environment...${NC}"
+# 2. Fresh Debian Install
+echo -e "${GREEN}[2/5] Resetting Debian environment...${NC}"
 proot-distro remove debian 2>/dev/null
 proot-distro install debian
 
-# 3. Enter Debian to install Box86 and Wine
-echo -e "${GREEN}[3/5] Installing Box86 and Wine (Using Modern Repos)...${NC}"
+# 3. Minimal Wine and Box86
+echo -e "${GREEN}[3/5] Installing Minimal Wine (No GUI)...${NC}"
 proot-distro login debian -- bash <<EOF
+    # Update and install basic tools
     apt update
-    apt install -y wget gnupg2 ca-certificates
+    apt install -y --no-install-recommends wget gnupg2 ca-certificates
     
-    # Enable 32-bit architecture
+    # Enable armhf (32-bit) for Box86
+    dpkg --add-architecture armhf
+    # Enable i386 for Wine
     dpkg --add-architecture i386
     apt update
 
-    # Install Wine and dependencies first
-    apt install -y wine wine32 libwine:i386
-
-    # Install Box86 using the official RyanFortner build (very stable)
+    # Install Box86 (Selecting the specific generic armhf version)
     wget https://ryanfortner.github.io/box86-debs/box86.list -O /etc/apt/sources.list.d/box86.list
     wget -qO- https://ryanfortner.github.io/box86-debs/KEY.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/box86.gpg
-    
     apt update
-    apt install -y box86
-    
-    if command -v box86 >/dev/null; then
-        echo "Box86 installed successfully."
-    else
-        # Fallback: Install via direct download if repo fails
-        echo "Repo failed, trying direct download..."
-        wget https://github.com/ptitSeb/box86/releases/download/v0.3.2/box86-generic_0.3.2_arm64.deb -O box86.deb
-        apt install ./box86.deb -y
-    fi
+    apt install -y --no-install-recommends box86-generic-arm:armhf
+
+    # Install the absolute minimum Wine packages
+    apt install -y --no-install-recommends wine32:i386 libwine:i386
+
+    # Cleanup to save space
+    apt clean
+    rm -rf /var/lib/apt/lists/*
 EOF
 
 # 4. Download the IBMTTS Bridge Server
@@ -61,11 +58,13 @@ wget -q "$SERVER_URL" -O $HOME/ibmtts/ibmtts_server_32bit.exe
 echo -e "${GREEN}[5/5] Creating startup script...${NC}"
 cat <<EOF > $PREFIX/bin/start-eloquence
 #!/data/data/com.termux/files/usr/bin/bash
-echo "Starting IBMTTS Bridge Server..."
-# Disable wine debug logs for better performance
-proot-distro login debian -- bash -c "WINEDEBUG=-all box86 wine $HOME/ibmtts/ibmtts_server_32bit.exe"
+# Disable all wine logs and GUI popups
+export WINEDEBUG=-all
+export DISPLAY=:0
+proot-distro login debian -- bash -c "box86 wine $HOME/ibmtts/ibmtts_server_32bit.exe"
 EOF
 chmod +x $PREFIX/bin/start-eloquence
 
-echo -e "${BLUE}=== SETUP COMPLETE ===${NC}"
-echo -e "Try typing: ${GREEN}start-eloquence${NC}"
+echo -e "${BLUE}=== MINIMAL SETUP COMPLETE ===${NC}"
+echo -e "Storage used: ~350MB"
+echo -e "Type: ${GREEN}start-eloquence${NC} to begin."

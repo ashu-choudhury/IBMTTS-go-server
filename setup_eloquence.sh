@@ -1,13 +1,13 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# --- IBMTTS (Eloquence) Termux Setup Script (v5.5 - POSIX) ---
+# --- IBMTTS (Eloquence) Termux Setup Script (v5.7 - DIRECT) ---
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== IBMTTS Portable Setup (v5.5) ===${NC}"
+echo -e "${BLUE}=== IBMTTS Portable Setup (v5.7) ===${NC}"
 
 # 1. Base packages
 echo -e "${GREEN}[1/5] Installing core tools...${NC}"
@@ -23,40 +23,11 @@ proot-distro install alpine
 echo -e "${GREEN}[3/5] Installing Portable Emulation Layer...${NC}"
 proot-distro login alpine -- sh <<EOF
     apk update
-    # Install core Alpine tools
-    apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++ binutils
+    apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++
     
-    # 1. Install Box86 (WOW64 64-bit Native Build)
-    echo "Downloading 64-bit Box86 for modern phones..."
-    wget https://github.com/ryanfortner/box86-debs/raw/master/debian/box86-android-wow64_0.3.9%2B20260108.0579f8b-1_armhf.deb -O /tmp/box86.deb
-    
-    mkdir -p /tmp/extract
-    cd /tmp/extract
-    ar x /tmp/box86.deb
-    
-    # Robustly find and extract the data archive (POSIX style)
-    for f in data.tar.*; do
-        echo "Extracting \$f..."
-        case "\$f" in
-            *.zst)
-                apk add zstd
-                zstd -d "\$f" -o data.tar
-                tar xf data.tar -C /
-                ;;
-            *.xz)
-                tar xf "\$f" -C /
-                ;;
-            *.gz)
-                tar xf "\$f" -C /
-                ;;
-            *)
-                echo "Unknown format: \$f"
-                ;;
-        esac
-    done
-    
-    # Fix paths for Box86
-    [ -f /usr/bin/box86 ] && ln -sf /usr/bin/box86 /usr/local/bin/box86
+    # 1. Install Box86 (Verified Mobox 64-bit Native Build)
+    echo "Downloading 64-bit Box86 (Mobox Build)..."
+    wget https://github.com/olegos2/mobox/raw/main/scripts/box86 -O /usr/local/bin/box86
     chmod +x /usr/local/bin/box86
     echo "Box86 installed."
 

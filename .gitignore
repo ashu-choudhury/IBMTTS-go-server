@@ -1,0 +1,19 @@
+# Binaries
+*.exe
+*.exe~
+# Project specific binaries
+ibmtts_server_32bit.exe
+ibmtts_server_x86.exe
+
+# Go workspace
+go.work
+go.sum
+
+# Temporary files
+lib/
+output_test.wav
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

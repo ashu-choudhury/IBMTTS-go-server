@@ -1,49 +1,42 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# --- IBMTTS (Eloquence) Termux Setup Script (v4.0 - MINIMALIST) ---
+# --- IBMTTS (Eloquence) Termux Setup Script (v5.0 - PORTABLE) ---
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== IBMTTS Android Minimal Setup (v4.0) ===${NC}"
+echo -e "${BLUE}=== IBMTTS Portable Setup (v5.0) ===${NC}"
 
-# 1. Base packages (Only the essentials)
-echo -e "${GREEN}[1/5] Installing Termux essentials...${NC}"
+# 1. Base packages
+echo -e "${GREEN}[1/5] Installing core tools...${NC}"
 pkg update -y
-pkg install -y proot-distro wget
+pkg install -y proot-distro wget tar
 
-# 2. Fresh Debian Install
-echo -e "${GREEN}[2/5] Resetting Debian environment...${NC}"
-proot-distro remove debian 2>/dev/null
-proot-distro install debian
+# 2. Setup Alpine (Smallest Linux)
+echo -e "${GREEN}[2/5] Setting up Alpine environment...${NC}"
+proot-distro remove alpine 2>/dev/null
+proot-distro install alpine
 
-# 3. Minimal Wine and Box86
-echo -e "${GREEN}[3/5] Installing Minimal Wine (No GUI)...${NC}"
-proot-distro login debian -- bash <<EOF
-    # Update and install basic tools
-    apt update
-    apt install -y --no-install-recommends wget gnupg2 ca-certificates
+# 3. Download Box86 and Portable Wine
+echo -e "${GREEN}[3/5] Installing Portable Emulation Layer...${NC}"
+proot-distro login alpine -- sh <<EOF
+    apk update
+    apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++
     
-    # Enable armhf (32-bit) for Box86
-    dpkg --add-architecture armhf
-    # Enable i386 for Wine
-    dpkg --add-architecture i386
-    apt update
+    # 1. Install Box86 (Static 64-bit)
+    wget https://github.com/ptitSeb/box86/releases/download/v0.3.2/box86-generic_0.3.2_arm64.deb -O /tmp/box86.deb
+    mkdir -p /tmp/extract
+    # Extract the deb manually
+    cd /tmp/extract && ar x /tmp/box86.deb && tar xf data.tar.xz -C /
+    chmod +x /usr/local/bin/box86
 
-    # Install Box86 (Selecting the specific generic armhf version)
-    wget https://ryanfortner.github.io/box86-debs/box86.list -O /etc/apt/sources.list.d/box86.list
-    wget -qO- https://ryanfortner.github.io/box86-debs/KEY.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/box86.gpg
-    apt update
-    apt install -y --no-install-recommends box86-generic-arm:armhf
-
-    # Install the absolute minimum Wine packages
-    apt install -y --no-install-recommends wine32:i386 libwine:i386
-
-    # Cleanup to save space
-    apt clean
-    rm -rf /var/lib/apt/lists/*
+    # 2. Download Portable Wine (Minimal Build)
+    mkdir -p /opt/wine
+    wget https://github.com/Kron4ek/Wine-Builds/releases/download/9.0/wine-9.0-x86.tar.xz -O /tmp/wine.tar.xz
+    tar xf /tmp/wine.tar.xz -C /opt/wine --strip-components=1
+    ln -s /opt/wine/bin/wine /usr/local/bin/wine
 EOF
 
 # 4. Download the IBMTTS Bridge Server
@@ -58,13 +51,10 @@ wget -q "$SERVER_URL" -O $HOME/ibmtts/ibmtts_server_32bit.exe
 echo -e "${GREEN}[5/5] Creating startup script...${NC}"
 cat <<EOF > $PREFIX/bin/start-eloquence
 #!/data/data/com.termux/files/usr/bin/bash
-# Disable all wine logs and GUI popups
 export WINEDEBUG=-all
-export DISPLAY=:0
-proot-distro login debian -- bash -c "box86 wine $HOME/ibmtts/ibmtts_server_32bit.exe"
+proot-distro login alpine -- bash -c "box86 wine $HOME/ibmtts/ibmtts_server_32bit.exe"
 EOF
 chmod +x $PREFIX/bin/start-eloquence
 
-echo -e "${BLUE}=== MINIMAL SETUP COMPLETE ===${NC}"
-echo -e "Storage used: ~350MB"
-echo -e "Type: ${GREEN}start-eloquence${NC} to begin."
+echo -e "${BLUE}=== PORTABLE SETUP COMPLETE ===${NC}"
+echo -e "Type: ${GREEN}start-eloquence${NC}"

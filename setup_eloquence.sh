@@ -1,13 +1,13 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# --- IBMTTS (Eloquence) Termux Setup Script (v5.2 - PORTABLE) ---
+# --- IBMTTS (Eloquence) Termux Setup Script (v5.5 - POSIX) ---
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== IBMTTS Portable Setup (v5.2) ===${NC}"
+echo -e "${BLUE}=== IBMTTS Portable Setup (v5.5) ===${NC}"
 
 # 1. Base packages
 echo -e "${GREEN}[1/5] Installing core tools...${NC}"
@@ -23,7 +23,7 @@ proot-distro install alpine
 echo -e "${GREEN}[3/5] Installing Portable Emulation Layer...${NC}"
 proot-distro login alpine -- sh <<EOF
     apk update
-    # binutils provides the 'ar' command needed to extract the .deb
+    # Install core Alpine tools
     apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++ binutils
     
     # 1. Install Box86 (Verified Android Build)
@@ -34,29 +34,38 @@ proot-distro login alpine -- sh <<EOF
     cd /tmp/extract
     ar x /tmp/box86.deb
     
-    # Robustly find and extract the data archive (could be .xz, .gz, or .zst)
-    DATA_FILE=$(ls data.tar.*)
-    echo "Extracting $DATA_FILE..."
-    if [[ "$DATA_FILE" == *.zst ]]; then
-        apk add zstd
-        zstd -d "$DATA_FILE" -o data.tar
-        tar xf data.tar -C /
-    else
-        tar xf "$DATA_FILE" -C /
-    fi
+    # Robustly find and extract the data archive (POSIX style)
+    for f in data.tar.*; do
+        echo "Extracting \$f..."
+        case "\$f" in
+            *.zst)
+                apk add zstd
+                zstd -d "\$f" -o data.tar
+                tar xf data.tar -C /
+                ;;
+            *.xz)
+                tar xf "\$f" -C /
+                ;;
+            *.gz)
+                tar xf "\$f" -C /
+                ;;
+            *)
+                echo "Unknown format: \$f"
+                ;;
+        esac
+    done
     
-    # Ensure binary is in the right place and executable
-    # The package might put it in /usr/bin or /usr/local/bin
-    if [ -f /usr/bin/box86 ]; then ln -s /usr/bin/box86 /usr/local/bin/box86; fi
+    # Fix paths for Box86
+    [ -f /usr/bin/box86 ] && ln -sf /usr/bin/box86 /usr/local/bin/box86
     chmod +x /usr/local/bin/box86
     echo "Box86 installed."
 
-    # 2. Download Portable Wine (Minimal Build)
+    # 2. Download Portable Wine
     echo "Downloading Portable Wine..."
     mkdir -p /opt/wine
     wget https://github.com/Kron4ek/Wine-Builds/releases/download/9.0/wine-9.0-x86.tar.xz -O /tmp/wine.tar.xz
     tar xf /tmp/wine.tar.xz -C /opt/wine --strip-components=1
-    ln -s /opt/wine/bin/wine /usr/local/bin/wine
+    ln -sf /opt/wine/bin/wine /usr/local/bin/wine
     echo "Wine installed."
 EOF
 

@@ -26,9 +26,9 @@ proot-distro login alpine -- sh <<EOF
     # binutils provides the 'ar' command needed to extract the .deb
     apk add bash wget ca-certificates tar xz gcompat libgcc libstdc++ binutils
     
-    # 1. Install Box86 (Static 64-bit build for AArch64)
+    # 1. Install Box86 (Verified Android Build)
     echo "Downloading Box86..."
-    wget https://github.com/ptitSeb/box86/releases/download/v0.3.2/box86_0.3.2_arm64.deb -O /tmp/box86.deb
+    wget https://github.com/ryanfortner/box86-debs/raw/master/debian/box86-android_0.3.9%2B20260108.0579f8b-1_armhf.deb -O /tmp/box86.deb
     
     mkdir -p /tmp/extract
     cd /tmp/extract

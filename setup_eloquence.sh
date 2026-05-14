@@ -33,7 +33,21 @@ proot-distro login alpine -- sh <<EOF
     mkdir -p /tmp/extract
     cd /tmp/extract
     ar x /tmp/box86.deb
-    tar xf data.tar.xz -C /
+    
+    # Robustly find and extract the data archive (could be .xz, .gz, or .zst)
+    DATA_FILE=$(ls data.tar.*)
+    echo "Extracting $DATA_FILE..."
+    if [[ "$DATA_FILE" == *.zst ]]; then
+        apk add zstd
+        zstd -d "$DATA_FILE" -o data.tar
+        tar xf data.tar -C /
+    else
+        tar xf "$DATA_FILE" -C /
+    fi
+    
+    # Ensure binary is in the right place and executable
+    # The package might put it in /usr/bin or /usr/local/bin
+    if [ -f /usr/bin/box86 ]; then ln -s /usr/bin/box86 /usr/local/bin/box86; fi
     chmod +x /usr/local/bin/box86
     echo "Box86 installed."
 
